@@ -13,6 +13,7 @@ from .analytics import (
     compute_ltv_summary,
 )
 from .generator import seed_synthetic_dataset
+from .segmentation import compute_rfm_segmentation
 from .storage import AnalyticsStore
 
 
@@ -43,6 +44,10 @@ def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
     @app.get("/api/funnel")
     def get_funnel() -> dict[str, Any]:
         return asdict(compute_funnel_report(store))
+
+    @app.get("/api/segmentation")
+    def get_segmentation() -> dict[str, Any]:
+        return asdict(compute_rfm_segmentation(store))
 
     @app.get("/api/experiments/paywall")
     def get_paywall_experiment() -> dict[str, Any]:

@@ -121,7 +121,37 @@ class TestGamePulseAnalytics(unittest.TestCase):
         self.assertIn("/api/retention", route_paths)
         self.assertIn("/api/monetization", route_paths)
         self.assertIn("/api/funnel", route_paths)
+        self.assertIn("/api/segmentation", route_paths)
         self.assertIn("/api/experiments/paywall", route_paths)
+
+    def test_rfm_whale_segmentation_and_gini_concentration(self):
+        from gamepulse import compute_rfm_segmentation
+
+        store = AnalyticsStore(":memory:")
+        store.insert_players([
+            PlayerProfile("w1", "2026-10-01", "apple_search_ads", "US"),
+            PlayerProfile("v1", "2026-10-01", "apple_search_ads", "US"),
+            PlayerProfile("d1", "2026-10-01", "meta_ua", "TR"),
+            PlayerProfile("f1", "2026-10-01", "organic", "DE"),
+        ])
+        store.insert_sessions([
+            SessionEvent("s1", "w1", "2026-10-01", 600),
+            SessionEvent("s2", "w1", "2026-10-02", 600),
+            SessionEvent("s3", "w1", "2026-10-03", 600),
+            SessionEvent("s4", "v1", "2026-10-01", 300),
+            SessionEvent("s5", "d1", "2026-10-01", 400),
+        ])
+        store.insert_revenue([
+            RevenueEvent("r1", "w1", "2026-10-02", "iap", 80.0),
+            RevenueEvent("r2", "v1", "2026-10-01", "iap", 50.0),
+            RevenueEvent("r3", "d1", "2026-10-01", "iap", 15.0),
+        ])
+
+        report = compute_rfm_segmentation(store)
+        self.assertEqual(report.at_risk_vip_count, 1)
+        self.assertGreater(report.whale_revenue_share_pct, 85.0)
+        self.assertGreater(report.gini_revenue_coefficient, 0.40)
+        store.close()
 
 
 if __name__ == "__main__":
