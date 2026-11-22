@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import atexit
+from contextlib import asynccontextmanager
 from dataclasses import asdict
-from typing import Any
+from typing import Any, AsyncIterator
 
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
@@ -18,14 +20,23 @@ from .storage import AnalyticsStore
 
 
 def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
-    app = FastAPI(
-        title="GamePulse-Analytics API",
-        version="1.0.0",
-        description="Mobile game & consumer app cohort retention, LTV/ROAS, funnel, and A/B testing engine.",
-    )
     store = AnalyticsStore(db_path=db_path)
     if auto_seed:
         seed_synthetic_dataset(store, player_count=1200, cohort_days=7, seed=42)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            store.close()
+
+    app = FastAPI(
+        title="GamePulse-Analytics API",
+        version="2.0.0",
+        description="Mobile game & consumer app cohort retention, RFM segmentation, LTV/ROAS, funnel, and A/B testing engine.",
+        lifespan=lifespan,
+    )
 
     app.state.store = store
 
@@ -74,6 +85,7 @@ def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
         cohorts = compute_cohort_retention(store)
         funnel = compute_funnel_report(store)
         exp = get_paywall_experiment()
+        seg = compute_rfm_segmentation(store)
 
         cohort_rows = "".join(
             f"<tr><td>{c.install_date}</td><td>{c.cohort_size}</td>"
@@ -86,6 +98,12 @@ def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
             f"<td>{s.conversion_from_start_pct}%</td><td>{s.step_conversion_pct}%</td>"
             f"<td>{s.drop_off_pct}%</td></tr>"
             for s in funnel.steps
+        )
+        seg_rows = "".join(
+            f"<tr><td>{row.segment}</td><td>{row.player_count:,}</td>"
+            f"<td>{row.share_of_players_pct:.1f}%</td><td>${row.total_revenue_usd:,.2f}</td>"
+            f"<td>{row.share_of_revenue_pct:.1f}%</td><td>{row.avg_sessions_per_player:.1f}</td></tr>"
+            for row in seg.segments
         )
         verdict = "SIGNIFICANT WINNER" if exp["is_statistically_significant"] else "INCONCLUSIVE"
         return f"""<!DOCTYPE html>
@@ -117,9 +135,13 @@ def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
     <div class="card"><div class="lbl">ARPU / ARPPU</div><div class="val">${ltv.arpu_usd:.2f} / ${ltv.arppu_usd:.2f}</div></div>
     <div class="card"><div class="lbl">ROAS</div><div class="val">{ltv.roas_pct:.1f}%</div></div>
     <div class="card"><div class="lbl">A/B Uplift ({verdict})</div><div class="val">{exp['relative_uplift_pct']:+.1f}%</div></div>
+    <div class="card"><div class="lbl">Whale Revenue Share</div><div class="val">{seg.whale_revenue_share_pct:.1f}%</div></div>
+    <div class="card"><div class="lbl">Gini Concentration</div><div class="val">{seg.gini_revenue_coefficient:.2f}</div></div>
   </div>
   <h2>Cohort Retention Matrix</h2>
   <table><thead><tr><th>Install Date</th><th>Size</th><th>D1</th><th>D3</th><th>D7</th><th>D14</th><th>D30</th></tr></thead><tbody>{cohort_rows}</tbody></table>
+  <h2>RFM Player Segmentation (At-Risk VIPs: {seg.at_risk_vip_count})</h2>
+  <table><thead><tr><th>Segment</th><th>Players</th><th>Player Share</th><th>Revenue</th><th>Revenue Share</th><th>Avg Sessions</th></tr></thead><tbody>{seg_rows}</tbody></table>
   <h2>Onboarding &amp; Progression Funnel (Bottleneck: {funnel.biggest_bottleneck_step})</h2>
   <table><thead><tr><th>Step</th><th>Users</th><th>Cumulative</th><th>Step Conv.</th><th>Drop-Off</th></tr></thead><tbody>{funnel_rows}</tbody></table>
 </div>
@@ -130,3 +152,4 @@ def create_app(db_path: str = ":memory:", auto_seed: bool = True) -> FastAPI:
 
 
 app = create_app()
+atexit.register(app.state.store.close)

@@ -116,13 +116,22 @@ class TestGamePulseAnalytics(unittest.TestCase):
 
         # Verify FastAPI app routes cleanly
         app = create_app(db_path=":memory:", auto_seed=True)
-        route_paths = {r.path for r in app.routes}
-        self.assertIn("/health", route_paths)
-        self.assertIn("/api/retention", route_paths)
-        self.assertIn("/api/monetization", route_paths)
-        self.assertIn("/api/funnel", route_paths)
-        self.assertIn("/api/segmentation", route_paths)
-        self.assertIn("/api/experiments/paywall", route_paths)
+        try:
+            route_paths = {r.path for r in app.routes}
+            self.assertIn("/health", route_paths)
+            self.assertIn("/api/retention", route_paths)
+            self.assertIn("/api/monetization", route_paths)
+            self.assertIn("/api/funnel", route_paths)
+            self.assertIn("/api/segmentation", route_paths)
+            self.assertIn("/api/experiments/paywall", route_paths)
+
+            dashboard_route = next(r for r in app.routes if getattr(r, "path", None) == "/")
+            html = dashboard_route.endpoint()
+            self.assertIn("RFM Player Segmentation", html)
+            self.assertIn("Gini Concentration", html)
+            self.assertIn("Whale Revenue Share", html)
+        finally:
+            app.state.store.close()
 
     def test_rfm_whale_segmentation_and_gini_concentration(self):
         from gamepulse import compute_rfm_segmentation

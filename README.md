@@ -19,17 +19,19 @@ flowchart LR
     DB --> RET["SQL Cohort Retention<br/>D1 · D3 · D7 · D14 · D30"]
     DB --> LTV["Monetization Engine<br/>ARPU · ARPPU · ARPDAU · ROAS · Payback"]
     DB --> FUN["Progression Funnel<br/>Drop-Off & Bottleneck Detector"]
+    DB --> RFM["RFM Whale Segmentation<br/>Whale · At-Risk VIP · Dolphin · Gini"]
     DB --> AB["Frequentist A/B Engine<br/>Two-Proportion Z-Test · 95% CI · SRM"]
-    RET & LTV & FUN & AB --> API["FastAPI REST API + Dark Dashboard"]
+    RET & LTV & FUN & RFM & AB --> API["FastAPI REST API + Dark Dashboard"]
 ```
 
 ## Core Capabilities
 
 - **SQL Cohort Retention Matrix (`compute_cohort_retention`):** Computes D1, D3, D7, D14, and D30 retention curves via SQLite CTEs & `julianday` offsets, filterable by acquisition channel (`apple_search_ads`, `meta_ua`, `organic`).
+- **RFM Player Segmentation & Gini Revenue Concentration (`compute_rfm_segmentation`):** Categorizes players into `whale`, `at_risk_vip`, `dolphin`, `minnow`, and `non_payer` tiers, tracking whale revenue share and the Lorenz/Gini concentration coefficient.
 - **LTV, ROAS & Payback Modeling (`compute_ltv_summary`):** Calculates Payer Conversion %, ARPU, ARPPU, ARPDAU, campaign ROAS %, and estimated CPI payback days.
 - **Funnel Bottleneck Diagnostics (`compute_funnel_report`):** Tracks step-to-step onboarding/level conversion and automatically identifies the steepest drop-off bottleneck.
 - **Zero-SciPy Statistical A/B Test Engine (`analyze_ab_test`):** Two-proportion Z-test using standard-library `math.erf`, two-tailed p-value, 95% Wald confidence interval, and a **Chi-Square Sample Ratio Mismatch (SRM)** guard that invalidates skewed splits automatically.
-- **Live FastAPI REST API & Executive Dashboard:** Exposes `/api/retention`, `/api/monetization`, `/api/funnel`, `/api/experiments/paywall`, and a dark-mode executive UI at `/`.
+- **Live FastAPI REST API & Executive Dashboard:** Exposes `/api/retention`, `/api/monetization`, `/api/funnel`, `/api/segmentation`, `/api/experiments/paywall`, and a dark-mode executive UI at `/`.
 
 ## Quick Start
 
