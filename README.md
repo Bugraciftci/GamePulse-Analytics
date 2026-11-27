@@ -3,6 +3,9 @@
 </div>
 
 <p align="center">
+  <a href="https://github.com/Bugraciftci/GamePulse-Analytics/actions/workflows/ci.yml"><img src="https://github.com/Bugraciftci/GamePulse-Analytics/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Bugraciftci/GamePulse-Analytics/releases/tag/v2.0.0"><img src="https://img.shields.io/badge/Release-v2.0.0-0EA5E9?style=for-the-badge" alt="Release v2.0.0" /></a>
+  <a href="https://bugraciftci.github.io/GamePulse-Analytics/"><img src="https://img.shields.io/badge/Live_Demo-Dashboard_%26_OpenAPI-6366F1?style=for-the-badge" alt="Live Demo" /></a>
   <img src="https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/SQLite_SQL-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
@@ -10,6 +13,8 @@
 </p>
 
 Mobile game and consumer app **product analytics, monetization modeling, and statistical A/B experimentation engine** built with Python, indexed SQLite analytical queries, and FastAPI.
+
+> 📈 **Live Showcase & API Spec:** [Executive Analytics Snapshot](https://bugraciftci.github.io/GamePulse-Analytics/) • [OpenAPI 3.1 JSON](https://bugraciftci.github.io/GamePulse-Analytics/openapi.json)
 
 ## Architecture
 

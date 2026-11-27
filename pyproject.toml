@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gamepulse-analytics"
-version = "1.0.0"
+version = "2.0.0"
 description = "Mobile game & consumer app product analytics engine: SQL cohort retention, LTV/ROAS payback modeling, funnel diagnostics, and statistical A/B experimentation with FastAPI."
 readme = "README.md"
 license = {text = "MIT"}
